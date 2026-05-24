@@ -1,44 +1,69 @@
-package com.randomlootpvp.listeners;
+<?xml version="1.0" encoding="UTF-8"?>
 
-import com.randomlootpvp.RandomLootPvP;
-import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.EquipmentSlot;
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-public class ChestInteractListener implements Listener {
+    <modelVersion>4.0.0</modelVersion>
 
-    private final RandomLootPvP plugin;
+    <groupId>me.rishu</groupId>
+    <artifactId>RandomLoot</artifactId>
+    <version>1.0</version>
+    <packaging>jar</packaging>
 
-    public ChestInteractListener(RandomLootPvP plugin) {
-        this.plugin = plugin;
-    }
+    <name>RandomLoot</name>
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onInteract(PlayerInteractEvent event) {
-        // Only care about main-hand right-clicks on blocks
-        if (event.getHand() != EquipmentSlot.HAND) return;
-        if (event.getClickedBlock() == null) return;
+    <properties>
+        <java.version>21</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
-        Block block = event.getClickedBlock();
-        if (block.getType() != Material.CHEST) return;
+    <build>
+        <plugins>
 
-        Player player = event.getPlayer();
+            <!-- Java Compiler -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
 
-        if (plugin.getChestManager().isTrackedChest(block.getLocation())) {
-            plugin.getChestManager().markOpened(block.getLocation());
-            player.sendMessage("§6[RandomLoot] §aYou found a loot chest! Grab the gear!");
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
 
-            // Broadcast to nearby players (within 200 blocks)
-            block.getWorld().getNearbyPlayers(block.getLocation(), 200).forEach(nearby -> {
-                if (!nearby.equals(player)) {
-                    nearby.sendMessage("§6[RandomLoot] §c" + player.getName() + " §eis looting a chest nearby!");
-                }
-            });
-        }
-    }
-}
+            <!-- Build JAR -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <repositories>
+
+        <!-- Paper Repository -->
+        <repository>
+            <id>papermc-repo</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+
+    </repositories>
+
+    <dependencies>
+
+        <!-- Paper API -->
+        <dependency>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>1.21.1-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+
+    </dependencies>
+
+</project>
