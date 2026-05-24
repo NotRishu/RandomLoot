@@ -1,0 +1,56 @@
+package com.randomlootpvp.model;
+
+import org.bukkit.Location;
+
+/**
+ * Represents a single active loot chest being tracked by the plugin.
+ */
+public class TrackedChest {
+
+    private final Location location;
+    private final long spawnTimeMillis;
+    private boolean opened;
+
+    public TrackedChest(Location location) {
+        this.location = location.clone();
+        this.spawnTimeMillis = System.currentTimeMillis();
+        this.opened = false;
+    }
+
+    public Location getLocation() {
+        return location.clone();
+    }
+
+    public long getSpawnTimeMillis() {
+        return spawnTimeMillis;
+    }
+
+    public boolean isOpened() {
+        return opened;
+    }
+
+    public void setOpened(boolean opened) {
+        this.opened = opened;
+    }
+
+    /**
+     * Returns true if this chest has been alive for longer than
+     * the given number of minutes.
+     */
+    public boolean isExpired(int despawnMinutes) {
+        long age = System.currentTimeMillis() - spawnTimeMillis;
+        return age > (long) despawnMinutes * 60 * 1000;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof TrackedChest other)) return false;
+        return location.equals(other.location);
+    }
+
+    @Override
+    public int hashCode() {
+        return location.hashCode();
+    }
+}

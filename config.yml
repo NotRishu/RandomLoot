@@ -1,0 +1,125 @@
+package com.randomlootpvp.commands;
+
+import com.randomlootpvp.RandomLootPvP;
+import com.randomlootpvp.model.TrackedChest;
+import org.bukkit.ChatColor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
+public class RandomLootCommand implements CommandExecutor, TabCompleter {
+
+    private final RandomLootPvP plugin;
+
+    public RandomLootCommand(RandomLootPvP plugin) {
+        this.plugin = plugin;
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+
+        if (!sender.hasPermission("randomloot.admin")) {
+            sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+            return true;
+        }
+
+        if (args.length == 0) {
+            sendHelp(sender);
+            return true;
+        }
+
+        switch (args[0].toLowerCase()) {
+
+            case "spawn" -> {
+                int amount = 1;
+                if (args.length >= 2) {
+                    try {
+                        amount = Integer.parseInt(args[1]);
+                        if (amount < 1 || amount > 50) {
+                            sender.sendMessage(ChatColor.RED + "Amount must be between 1 and 50.");
+                            return true;
+                        }
+                    } catch (NumberFormatException e) {
+                        sender.sendMessage(ChatColor.RED + "Invalid number: " + args[1]);
+                        return true;
+                    }
+                }
+
+                int spawned = 0;
+                for (int i = 0; i < amount; i++) {
+                    int before = plugin.getChestManager().getChestCount();
+                    plugin.getChestManager().spawnRandomChest();
+                    if (plugin.getChestManager().getChestCount() > before) spawned++;
+                }
+
+                sender.sendMessage(ChatColor.GREEN + "Spawned " + spawned + "/" + amount +
+                        " loot chests (only generated chunks used).");
+            }
+
+            case "removeall" -> {
+                int count = plugin.getChestManager().getChestCount();
+                plugin.getChestManager().removeAll();
+                sender.sendMessage(ChatColor.RED + "Removed " + count + " loot chests.");
+            }
+
+            case "refill" -> {
+                plugin.getChestManager().refillAll();
+                sender.sendMessage(ChatColor.YELLOW + "Refilled all " +
+                        plugin.getChestManager().getChestCount() + " loot chests.");
+            }
+
+            case "info" -> {
+                Collection<TrackedChest> chests = plugin.getChestManager().getTrackedChests();
+                int despawn = plugin.getConfigManager().getDespawnAfterMinutes();
+
+                sender.sendMessage(ChatColor.GOLD + "=== RandomLootPvP Info ===");
+                sender.sendMessage(ChatColor.YELLOW + "Active chests: " + ChatColor.WHITE + chests.size() +
+                        "/" + plugin.getConfigManager().getMaxChests());
+                sender.sendMessage(ChatColor.YELLOW + "Spawn interval: " + ChatColor.WHITE +
+                        plugin.getConfigManager().getSpawnIntervalSeconds() + "s");
+                sender.sendMessage(ChatColor.YELLOW + "Despawn after: " + ChatColor.WHITE + despawn + " min");
+                sender.sendMessage(ChatColor.YELLOW + "Near-player radius: " + ChatColor.WHITE +
+                        plugin.getConfigManager().getSpawnNearPlayerRadius() + " blocks");
+
+                long opened = chests.stream().filter(TrackedChest::isOpened).count();
+                sender.sendMessage(ChatColor.YELLOW + "Opened chests: " + ChatColor.WHITE + opened);
+            }
+
+            case "reload" -> {
+                plugin.getConfigManager().reload();
+                sender.sendMessage(ChatColor.GREEN + "Config reloaded.");
+            }
+
+            default -> sendHelp(sender);
+        }
+
+        return true;
+    }
+
+    private void sendHelp(CommandSender sender) {
+        sender.sendMessage(ChatColor.GOLD + "=== RandomLootPvP Commands ===");
+        sender.sendMessage(ChatColor.YELLOW + "/randomloot spawn [amount]" + ChatColor.WHITE + " - Force-spawn chests");
+        sender.sendMessage(ChatColor.YELLOW + "/randomloot removeall" + ChatColor.WHITE + " - Remove all loot chests");
+        sender.sendMessage(ChatColor.YELLOW + "/randomloot refill" + ChatColor.WHITE + " - Refill all active chests");
+        sender.sendMessage(ChatColor.YELLOW + "/randomloot info" + ChatColor.WHITE + " - Show plugin stats");
+        sender.sendMessage(ChatColor.YELLOW + "/randomloot reload" + ChatColor.WHITE + " - Reload config.yml");
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (!sender.hasPermission("randomloot.admin")) return List.of();
+
+        if (args.length == 1) {
+            return Arrays.asList("spawn", "removeall", "refill", "info", "reload");
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("spawn")) {
+            return Arrays.asList("1", "3", "5", "10");
+        }
+        return List.of();
+    }
+}
